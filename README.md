@@ -1,2 +1,2 @@
 # text-summarisation
-Automatic text summarisation in Python
+Automatic text summarization in Python
