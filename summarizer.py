@@ -13,7 +13,7 @@ import operator
 import sys
 import argparse
 
-def extractTextFromURL(url):
+def extract_text_from_URL(url):
     req = requests.get(url)
     soup = BeautifulSoup(req.text, "html.parser")
     paragraphs = []
@@ -21,7 +21,7 @@ def extractTextFromURL(url):
         paragraphs.append(p.text)
     return paragraphs
 
-def extractSentences(paragraphs):
+def extract_sentences(paragraphs):
     sentences = []
     for paragraph in paragraphs:
         sentences_per_paragraph = sent_tokenize(paragraph)
@@ -29,13 +29,13 @@ def extractSentences(paragraphs):
             sentences.append(sentence_per_paragraph)
     return sentences
 
-def calculateWordFrequency(sentences):
+def calculate_word_frequency(sentences):
     words_frequency = {}
     stemmer = nltk.PorterStemmer()
     for sentence in sentences:
         allTokens = word_tokenize(sentence)
         allTokens=[word.lower() for word in allTokens if word.isalpha()]
-        tokens = removeStopWords(allTokens)
+        tokens = remove_stop_words(allTokens)
         for token in tokens:
             stemmedToken = stemmer.stem(token)
             if (stemmedToken in words_frequency):
@@ -44,21 +44,24 @@ def calculateWordFrequency(sentences):
                 words_frequency[stemmedToken] = 1
     return words_frequency
 
-def convertStemmedSentences(sentences):
+def convert_stemmed_sentences(sentences):
     processedSentences = []
     stemmer = nltk.PorterStemmer()
     for sentence in sentences:
         allTokens = word_tokenize(sentence)
         allTokens= [word.lower() for word in allTokens if word.isalpha()]
-        tokens = removeStopWords(allTokens)
-        tokenList = []
+        tokens = remove_stop_words(allTokens)
+        #tokenList = [stemmer.stem(t) for t in tokens]
+
         for token in tokens:
             stemmedToken = stemmer.stem(token)
+            tokenList = []
             tokenList.append(stemmedToken)
         processedSentences.append(tokenList)
+        print(processedSentences)
     return (processedSentences)
         
-def removeStopWords(tokens):
+def remove_stop_words(tokens):
     stopWords = set(stopwords.words('english'))
     filteredTokens = []
     for token in tokens: 
@@ -66,7 +69,7 @@ def removeStopWords(tokens):
             filteredTokens.append(token)
     return filteredTokens
 
-def countWeightPerSentence(wordsFrequency, processedSentences):
+def count_weight_per_sentence(wordsFrequency, processedSentences):
     score = []
     for sentence in processedSentences:
         scorePerSentence = 0
@@ -76,18 +79,18 @@ def countWeightPerSentence(wordsFrequency, processedSentences):
         score.append(scorePerSentence)
     return score
 
-def mapSentencestoScores(sentences, score):
+def map_sentences_to_scores(sentences, score):
     sentencesScores = {}
     sentencesScores = dict(zip(sentences, score))
     return sentencesScores
 
-def sortSentences(sentencesScores):
+def sort_sentences(sentencesScores):
     sortSentences = {}
     for k,v in sorted(sentencesScores.items(),key=lambda p:p[1], reverse=True):
         sortSentences[k] = v
-        print(k, v)
+        #print(k, v)
 
-def numofSentences(sentences):
+def numof_sentences(sentences):
     numofSentences = len(sentences) // 3
     return numofSentences
 
@@ -99,10 +102,11 @@ def setup():
 def main():
     #args = setup()
     #input_url = args.text
-    #paragraphs = extractTextFromURL(input_url)
-    sentences = extractSentences(extractTextFromURL("https://en.wikipedia.org/wiki/Java_(programming_language)"))
-    score = countWeightPerSentence(calculateWordFrequency(sentences), convertStemmedSentences(sentences))
-    sortSentences(mapSentencestoScores(sentences, score))
+    #paragraphs = extract_text_from_URL(input_url)
+    sentences = ["My name is Anna", "My dog is Oscar", "Her name is Sofia", "She makes good carbonara - making"]
+    #sentences = extract_sentences(extract_text_from_URL("https://en.wikipedia.org/wiki/Java_(programming_language)"))
+    score = count_weight_per_sentence(calculate_word_frequency(sentences), convert_stemmed_sentences(sentences))
+    sort_sentences(map_sentences_to_scores(sentences, score))
 
 if __name__ == "__main__":
     sys.exit(main())
