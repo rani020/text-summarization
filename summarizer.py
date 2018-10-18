@@ -12,6 +12,7 @@ import requests
 import operator
 import sys
 import argparse
+from collections import defaultdict
 
 def extract_text_from_URL(url):
     req = requests.get(url)
@@ -27,68 +28,58 @@ def extract_sentences(paragraphs):
         sentences_per_paragraph = sent_tokenize(paragraph)
         for sentence_per_paragraph in sentences_per_paragraph:
             sentences.append(sentence_per_paragraph)
+    print(sentences)
     return sentences
 
 def calculate_word_frequency(sentences):
-    words_frequency = {}
+    words_frequency = defaultdict(int)
     stemmer = nltk.PorterStemmer()
     for sentence in sentences:
-        allTokens = word_tokenize(sentence)
-        allTokens=[word.lower() for word in allTokens if word.isalpha()]
-        tokens = remove_stop_words(allTokens)
+        all_tokens = word_tokenize(sentence)
+        all_tokens =[word.lower() for word in all_tokens if word.isalpha()]
+        tokens = remove_stop_words(all_tokens)
         for token in tokens:
-            stemmedToken = stemmer.stem(token)
-            if (stemmedToken in words_frequency):
-                words_frequency[stemmedToken] = words_frequency[stemmedToken] + 1
-            else:
-                words_frequency[stemmedToken] = 1
+            stemmed_token = stemmer.stem(token)
+            words_frequency[stemmed_token] += 1
     return words_frequency
 
 def convert_stemmed_sentences(sentences):
-    processedSentences = []
+    processed_sentences = []
+    tokenList = []
     stemmer = nltk.PorterStemmer()
     for sentence in sentences:
-        allTokens = word_tokenize(sentence)
-        allTokens= [word.lower() for word in allTokens if word.isalpha()]
-        tokens = remove_stop_words(allTokens)
-        #tokenList = [stemmer.stem(t) for t in tokens]
-
-        for token in tokens:
-            stemmedToken = stemmer.stem(token)
-            tokenList = []
-            tokenList.append(stemmedToken)
-        processedSentences.append(tokenList)
-        print(processedSentences)
-    return (processedSentences)
+        all_tokens = word_tokenize(sentence)
+        all_tokens= [word.lower() for word in all_tokens if word.isalpha()]
+        tokens = remove_stop_words(all_tokens)
+        tokenList = [stemmer.stem(t) for t in tokens]
+        processed_sentences.append(tokenList)
+    return (processed_sentences)
         
 def remove_stop_words(tokens):
-    stopWords = set(stopwords.words('english'))
-    filteredTokens = []
-    for token in tokens: 
-        if token not in stopWords:
-            filteredTokens.append(token)
+    stop_words = set(stopwords.words('english'))
+    filteredTokens = [t for t in tokens if t not in stop_words]
     return filteredTokens
 
-def count_weight_per_sentence(wordsFrequency, processedSentences):
+def count_weight_per_sentence(words_frequency, processedSentences):
     score = []
     for sentence in processedSentences:
-        scorePerSentence = 0
-        for key in wordsFrequency:
-            countPerWord = sentence.count(key)
-            scorePerSentence = scorePerSentence + wordsFrequency[key]*countPerWord
-        score.append(scorePerSentence)
+        score_per_sentence = 0
+        for key in words_frequency:
+            count_per_word = sentence.count(key)
+            score_per_sentence = score_per_sentence + words_frequency[key]*count_per_word
+        score.append(score_per_sentence)
     return score
 
 def map_sentences_to_scores(sentences, score):
-    sentencesScores = {}
-    sentencesScores = dict(zip(sentences, score))
-    return sentencesScores
+    sentences_scores = {}
+    sentences_scores = dict(zip(sentences, score))
+    return sentences_scores
 
 def sort_sentences(sentencesScores):
     sortSentences = {}
     for k,v in sorted(sentencesScores.items(),key=lambda p:p[1], reverse=True):
         sortSentences[k] = v
-        #print(k, v)
+        print(k, v)
 
 def numof_sentences(sentences):
     numofSentences = len(sentences) // 3
@@ -103,8 +94,8 @@ def main():
     #args = setup()
     #input_url = args.text
     #paragraphs = extract_text_from_URL(input_url)
-    sentences = ["My name is Anna", "My dog is Oscar", "Her name is Sofia", "She makes good carbonara - making"]
-    #sentences = extract_sentences(extract_text_from_URL("https://en.wikipedia.org/wiki/Java_(programming_language)"))
+    #sentences = ["My name is Anna", "My dog is Oscar", "Her name is Sofia", "She makes good carbonara - making"]
+    sentences = extract_sentences(extract_text_from_URL("https://en.wikipedia.org/wiki/Java_(programming_language)"))
     score = count_weight_per_sentence(calculate_word_frequency(sentences), convert_stemmed_sentences(sentences))
     sort_sentences(map_sentences_to_scores(sentences, score))
 
